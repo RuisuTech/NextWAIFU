@@ -1,11 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +12,9 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import { useKeyboardHandler } from "react-native-keyboard-controller";
 import { AppConfig, ThemeColors, WaifuEmotion, DEFAULT_AVATARS, EMOTION_LABELS } from "../../companion/types";
 import { useGemini } from "../../companion/useGemini";
 import { GearMenu } from "../customization/GearMenu";
@@ -24,6 +26,22 @@ function resolveAvatar(uri: string) {
   }
   return { uri };
 }
+
+const useKeyboardHeight = () => {
+  const height = useSharedValue(0);
+
+  useKeyboardHandler(
+    {
+      onMove: (e) => {
+        "worklet";
+        height.value = Math.max(e.height, 0);
+      },
+    },
+    []
+  );
+
+  return height;
+};
 
 interface Props {
   config: AppConfig;
@@ -56,11 +74,31 @@ export function ChatScreen({
   } = useGemini(config.apiKey);
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
+  const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
 
-  useEffect(() => {
-    scrollRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
+  const spacerStyle = useAnimatedStyle(() => ({
+    height: keyboardHeight.value,
+  }), []);
+
+  const renderMessage = useCallback(
+    ({ item }: { item: typeof messages[number] }) => (
+      <View
+        style={[
+          s.bubble,
+          item.isUser
+            ? [s.bubbleUser, { backgroundColor: accent }]
+            : [s.bubbleAI, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }],
+        ]}
+      >
+        <Text style={[s.bubbleText, item.isUser ? { color: "#FFFFFF" } : { color: theme.textSecondary }]}>
+          {item.text}
+        </Text>
+      </View>
+    ),
+    [accent, theme]
+  );
 
   return (
     <View style={[s.root, { backgroundColor: theme.bg }]}>
@@ -77,7 +115,7 @@ export function ChatScreen({
         theme={theme}
       />
 
-      <SafeAreaView style={[s.safeTop, { backgroundColor: theme.surface }]}>
+      <SafeAreaView edges={["top"]} style={[s.safeTop, { backgroundColor: theme.surface }]}>
         <View style={[s.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <TouchableOpacity
             style={[s.gearBtn, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}
@@ -104,26 +142,36 @@ export function ChatScreen({
         </View>
       </SafeAreaView>
 
-      <KeyboardAvoidingView style={s.chatArea} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView ref={scrollRef} style={s.chatScroll} contentContainerStyle={s.chatContent} showsVerticalScrollIndicator={false}>
-          {messages.map((msg) => (
-            <View
-              key={msg.id}
-              style={[s.bubble, msg.isUser ? [s.bubbleUser, { backgroundColor: accent }] : [s.bubbleAI, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]]}
-            >
-              <Text style={[s.bubbleText, msg.isUser ? { color: "#FFFFFF" } : { color: theme.textSecondary }]}>
-                {msg.text}
-              </Text>
-            </View>
-          ))}
-          {isLoading && (
+      <View style={s.chatArea}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          style={s.chatScroll}
+          contentContainerStyle={[s.chatContent, { paddingBottom: 8 }]}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onScrollBeginDrag={() => Keyboard.dismiss()}
+        />
+        {isLoading && (
+          <View style={[s.loadingRow]}>
             <View style={[s.bubble, s.bubbleAI, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}>
               <ActivityIndicator size="small" color={accent} />
             </View>
-          )}
-        </ScrollView>
+          </View>
+        )}
 
-        <View style={[s.inputBar, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+        <View
+          style={[
+            s.inputBar,
+            {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+              paddingBottom: Math.max(insets.bottom, 12),
+            },
+          ]}
+        >
           <TextInput
             style={[s.input, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
             value={inputText}
@@ -145,7 +193,9 @@ export function ChatScreen({
             <Text style={s.sendTxt}>{isLoading ? "..." : "▶"}</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+
+        <Animated.View style={spacerStyle} />
+      </View>
     </View>
   );
 }
@@ -165,12 +215,13 @@ const s = StyleSheet.create({
   statusText: { fontSize: 12, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" },
   chatArea: { flex: 1 },
   chatScroll: { flex: 1 },
-  chatContent: { padding: 16, paddingBottom: 8, gap: 12 },
+  chatContent: { padding: 16, gap: 12 },
+  loadingRow: { paddingHorizontal: 16, paddingBottom: 8 },
   bubble: { maxWidth: "82%", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 18 },
   bubbleUser: { alignSelf: "flex-end", borderBottomRightRadius: 4 },
   bubbleAI: { alignSelf: "flex-start", borderWidth: 1, borderBottomLeftRadius: 4 },
   bubbleText: { fontSize: 15, lineHeight: 22 },
-  inputBar: { flexDirection: "row", alignItems: "flex-end", padding: 12, paddingBottom: 24, borderTopWidth: 1, gap: 10 },
+  inputBar: { flexDirection: "row", alignItems: "flex-end", padding: 12, borderTopWidth: 1, gap: 10 },
   input: { flex: 1, minHeight: 44, maxHeight: 100, borderWidth: 1, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 12, fontSize: 15, lineHeight: 20 },
   sendBtn: { width: 48, height: 48, borderRadius: 24, justifyContent: "center", alignItems: "center", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 4 },
   sendBtnOff: { backgroundColor: "#27272A", shadowOpacity: 0 },

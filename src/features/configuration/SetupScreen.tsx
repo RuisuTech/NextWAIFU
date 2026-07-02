@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { AppConfig, ThemeColors, WaifuEmotion, DEFAULT_AVATARS, EMOTION_LABELS } from "../../companion/types";
 import { saveConfig } from "../../shared/storage";
 import { DARK } from "../../shared/theme";
@@ -59,7 +59,7 @@ export function SetupScreen({ onSave, theme, accent }: Props) {
   return (
     <View style={[s.root, { backgroundColor: theme.bg }]}>
       <StatusBar style={theme === DARK ? "light" : "dark"} />
-      <SafeAreaView style={[s.safeTop, { backgroundColor: theme.surface }]}>
+      <SafeAreaView edges={["top", "left", "right"]} style={[s.safeTop, { backgroundColor: theme.surface }]}>
         <ScrollView contentContainerStyle={s.scroll}>
           <Text style={[s.title, { color: accent }]}>NextWAIFU</Text>
           <Text style={[s.subtitle, { color: theme.textMuted }]}>

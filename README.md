@@ -62,6 +62,61 @@ npx expo start
    - Cambiar tema (Oscuro / Claro)
    - Seleccionar color de acento
 
+## Despliegue
+
+### Web (Vercel)
+
+El proyecto ya viene configurado con `vercel.json`. Para desplegar:
+
+```bash
+# 1. Exportar la versión web estática
+npx expo export --platform web
+
+# 2. Desplegar en Vercel (requiere CLI de Vercel)
+npx vercel --prod
+```
+
+> La configuración de Vercel incluye rewrites para SPA, headers de seguridad y build automático.
+
+### Android (EAS Build)
+
+Para compilar la app de Android localmente necesitas [Expo CLI](https://docs.expo.dev/eas/cli/):
+
+```bash
+# 1. Instalar EAS CLI (si no lo tienes)
+npm install -g eas-cli
+
+# 2. Autenticarte con tu cuenta de Expo
+eas login
+
+# 3. Configurar el proyecto (solo la primera vez)
+eas build:configure
+```
+
+## Descarga
+
+### Android — APK (Testing / Distribución interna)
+
+Genera un `.apk` para instalar directamente en dispositivos Android sin pasar por la Play Store:
+
+```bash
+eas build --profile preview --platform android
+```
+
+Al finalizar, EAS te proporcionará un **enlace de descarga** del APK que podrás abrir en tu dispositivo Android.
+
+### Android — AAB (Google Play Store)
+
+Genera un `.aab` (app bundle) listo para subir a la Play Console:
+
+```bash
+eas build --profile production --platform android
+```
+
+### Web
+
+La versión web estática está desplegada y accesible directamente desde el navegador. Si tienes acceso a Vercel, accede desde tu dashboard con `npx vercel --prod`.
+
 ## Scripts
 
 | Comando | Descripción |
