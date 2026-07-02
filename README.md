@@ -1,50 +1,85 @@
-# Welcome to your Expo app 👋
+# NextWAIFU 💜
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Compañera virtual empática y emocional impulsada por Google Gemini. Una app móvil built with React Native (Expo) y TypeScript que combina un sistema de avatares reactivos con personalización visual dinámica.
 
-## Get started
+## Características
 
-1. Install dependencies
+- **Gemini 2.5 Flash** — Chat con IA usando el modelo más reciente de Google
+- **Avatares reactivos** — La imagen de tu WAIFU cambia según la emoción detectada en cada respuesta
+- **5 emociones** — Feliz, Pensativa, Orgullosa, Burlona, Preocupada
+- **Modo Oscuro / Claro** — Tema intercambiable con persistencia local
+- **4 colores de acento** — Morado, Rosa, Azul, Verde (se aplican en tiempo real)
+- **Configuración persistente** — API key, avatares y preferencias se guardan con AsyncStorage
+- **Sistema de prompts sentimental** — La IA responde con empatía, cariño y cercanía
 
-   ```bash
-   npm install
-   ```
+## Arquitectura
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+src/
+  companion/          # Lógica del modelo y emociones
+    types.ts          # WaifuEmotion, AppConfig, Gemini*, ThemeColors
+    emotions.ts       # Regex parser de etiquetas [EMOCION:...]
+    useGemini.ts      # Hook: envía solo los últimos 4 mensajes al API
+  shared/             # Servicios y utilidades
+    storage.ts        # AsyncStorage: config y tema
+    theme.ts          # Paletas DARK/LIGHT y colores de acento
+  features/           # Componentes por feature
+    configuration/    # Pantalla de setup inicial
+    chat/             # Pantalla principal con avatar + burbujas
+    customization/    # Modal de opciones (tema, color, ajustes)
+app/                  # Expo Router (punto de entrada)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Requisitos
 
-## Learn more
+- Node.js 18+
+- npm o yarn
+- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+- Una **API Key de Google Gemini** (gratis en [Google AI Studio](https://aistudio.google.com))
 
-To learn more about developing your project with Expo, look at the following resources:
+## Instalación
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/tu-usuario/NextWAIFU.git
+cd NextWAIFU
 
-## Join the community
+# 2. Instalar dependencias
+npm install
 
-Join our community of developers creating universal apps.
+# 3. Iniciar el servidor de desarrollo
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Uso
+
+1. Al abrir la app verás la pantalla de **Setup**
+2. Pega tu **Gemini API Key** en el campo correspondiente
+3. (Opcional) Cambia los avatares de las emociones pegando URLs de imágenes
+4. Toca **"Empezar a charlar 💬"**
+5. Usa el botón ⚙️ para acceder al menú de opciones:
+   - Ajustar NextWAIFU (volver al setup)
+   - Cambiar tema (Oscuro / Claro)
+   - Seleccionar color de acento
+
+## Scripts
+
+| Comando | Descripción |
+|---------|-------------|
+| `npx expo start` | Iniciar servidor de desarrollo |
+| `npx expo start --android` | Abrir en Android |
+| `npx expo start --ios` | Abrir en iOS |
+| `npx expo start --web` | Abrir en navegador |
+| `npm run lint` | Ejecutar ESLint |
+
+## Stack
+
+- **Runtime:** React Native 0.81 + Expo SDK 54
+- **Routing:** Expo Router v6
+- **Language:** TypeScript 5.9 (strict)
+- **API:** Google Gemini 2.5 Flash (REST)
+- **Persistencia:** @react-native-async-storage/async-storage
+
+## Licencia
+
+MIT

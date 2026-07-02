@@ -1,98 +1,77 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { AppConfig } from "../../src/companion/types";
+import { loadConfig, loadTheme, removeConfig, saveTheme } from "../../src/shared/storage";
+import { DARK, resolveTheme } from "../../src/shared/theme";
+import { SetupScreen } from "../../src/features/configuration/SetupScreen";
+import { ChatScreen } from "../../src/features/chat/ChatScreen";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function NextWaifuScreen() {
+  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [accentColor, setAccentColor] = useState("#A855F7");
 
-export default function HomeScreen() {
+  const theme = resolveTheme(isDarkMode);
+
+  useEffect(() => {
+    Promise.all([loadConfig(), loadTheme()]).then(([cfg, t]) => {
+      setConfig(cfg);
+      setIsDarkMode(t.isDarkMode);
+      setAccentColor(t.accentColor);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleSave = (cfg: AppConfig) => setConfig(cfg);
+
+  const handleLogout = async () => {
+    await removeConfig();
+    setConfig(null);
+  };
+
+  const handleToggleTheme = async () => {
+    const next = !isDarkMode;
+    setIsDarkMode(next);
+    await saveTheme({ isDarkMode: next, accentColor });
+  };
+
+  const handleSelectAccent = async (color: string) => {
+    setAccentColor(color);
+    await saveTheme({ isDarkMode, accentColor: color });
+  };
+
+  if (loading) {
+    return (
+      <View style={[s.root, s.center, { backgroundColor: DARK.bg }]}>
+        <StatusBar style="light" />
+        <ActivityIndicator size="large" color="#A855F7" />
+        <Text style={s.loadingTxt}>Cargando NextWAIFU...</Text>
+      </View>
+    );
+  }
+
+  if (!config) {
+    return <SetupScreen onSave={handleSave} theme={theme} accent={accentColor} />;
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ChatScreen
+      config={config}
+      onLogout={handleLogout}
+      theme={theme}
+      accent={accentColor}
+      isDarkMode={isDarkMode}
+      onToggleTheme={handleToggleTheme}
+      accentColor={accentColor}
+      onSelectAccent={handleSelectAccent}
+    />
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  center: { justifyContent: "center", alignItems: "center", gap: 12 },
+  loadingTxt: { color: "#A1A1AA", fontSize: 14 },
 });
