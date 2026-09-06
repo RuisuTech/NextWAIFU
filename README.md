@@ -1,4 +1,4 @@
-# NextWAIFU 💜
+# NextWAIFU
 
 Compañera virtual empática y emocional impulsada por Google Gemini. Una app móvil built with React Native (Expo) y TypeScript que combina un sistema de avatares reactivos con personalización visual dinámica.
 
@@ -56,7 +56,7 @@ npx expo start
 1. Al abrir la app verás la pantalla de **Setup**
 2. Pega tu **Gemini API Key** en el campo correspondiente
 3. (Opcional) Cambia los avatares de las emociones pegando URLs de imágenes
-4. Toca **"Empezar a charlar 💬"**
+4. Toca **"Empezar a charlar"**
 5. Usa el botón ⚙️ para acceder al menú de opciones:
    - Ajustar NextWAIFU (volver al setup)
    - Cambiar tema (Oscuro / Claro)
@@ -93,8 +93,6 @@ eas login
 eas build:configure
 ```
 
-## Descarga
-
 ### Android — APK (Testing / Distribución interna)
 
 Genera un `.apk` para instalar directamente en dispositivos Android sin pasar por la Play Store:
@@ -102,8 +100,6 @@ Genera un `.apk` para instalar directamente en dispositivos Android sin pasar po
 ```bash
 eas build --profile preview --platform android
 ```
-
-Al finalizar, EAS te proporcionará un **enlace de descarga** del APK que podrás abrir en tu dispositivo Android.
 
 ### Android — AAB (Google Play Store)
 
