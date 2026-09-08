@@ -1,4 +1,4 @@
-# NextWAIFU
+# NextWAIFU - Novela Visual
 
 Compañera virtual empática y emocional impulsada por Google Gemini. Una app móvil built with React Native (Expo) y TypeScript que combina un sistema de avatares reactivos con personalización visual dinámica.
 
