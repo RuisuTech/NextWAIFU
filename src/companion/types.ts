@@ -1,15 +1,25 @@
 import { ImageSourcePropType } from "react-native";
 
-export type WaifuEmotion = "feliz" | "pensativa" | "orgullosa" | "burlona" | "preocupada";
+export type WaifuEmotion =
+  | "emocionada"
+  | "molesta"
+  | "pensativa"
+  | "sorprendida"
+  | "timida"
+  | "triste";
 
 export interface AppConfig {
   apiKey: string;
   avatars: Record<WaifuEmotion, string>;
+  name?: string;
+  identity?: string;
+  personality?: string;
+  elevenLabsApiKey?: string;
+  elevenLabsVoiceId?: string;
 }
 
 export interface ThemePrefs {
   isDarkMode: boolean;
-  accentColor: string;
 }
 
 export interface ChatMessage {
@@ -57,17 +67,24 @@ export interface ThemeColors {
 }
 
 export const DEFAULT_AVATARS: Record<WaifuEmotion, ImageSourcePropType> = {
-  feliz: require("../../assets/images/feliz.png"),
-  pensativa: require("../../assets/images/pensativa.png"),
-  orgullosa: require("../../assets/images/orgullosa.png"),
-  burlona: require("../../assets/images/burlona.png"),
-  preocupada: require("../../assets/images/derrota.png"),
+  emocionada: require("../../assets/images/avatars/Emocionada.png"),
+  molesta: require("../../assets/images/avatars/Molesta.png"),
+  pensativa: require("../../assets/images/avatars/Pensativa.png"),
+  sorprendida: require("../../assets/images/avatars/Sorprendida.png"),
+  timida: require("../../assets/images/avatars/Timida.png"),
+  triste: require("../../assets/images/avatars/Triste.png"),
 };
 
 export const EMOTION_LABELS: Record<WaifuEmotion, string> = {
-  feliz: "¡Feliz!",
+  emocionada: "Emocionada",
+  molesta: "Molesta",
   pensativa: "Pensando...",
-  orgullosa: "Orgullosa",
-  burlona: "Burlona",
-  preocupada: "Preocupada",
+  sorprendida: "Sorprendida",
+  timida: "Tímida",
+  triste: "Triste",
+};
+
+export const BACKGROUNDS = {
+  light: require("../../assets/images/avatars/FondoDia.png"),
+  dark: require("../../assets/images/avatars/FondoNoche.png"),
 };

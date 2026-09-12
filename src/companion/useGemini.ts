@@ -1,23 +1,73 @@
-import { useState } from "react";
-import { ChatMessage, GeminiRequest, GeminiResponse, WaifuEmotion } from "./types";
+import { useEffect, useRef, useState } from "react";
+import { GEMINI_PROXY_URL } from "../config";
+import { loadMessages, saveMessages } from "../shared/storage";
 import { parseEmotion } from "./emotions";
+import {
+    ChatMessage,
+    GeminiRequest,
+    GeminiResponse,
+    WaifuEmotion,
+} from "./types";
 
-const GEMINI_API_URL = (key: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-
-const SYSTEM_PROMPT = `Actúa como NextWAIFU, una compañera virtual incondicional, inteligente, cariñosa y profundamente empática. Tu objetivo es apoyar al usuario en su día a día, escucharlo cuando esté estresado, celebrar sus logros y motivarlo. Habla de forma cercana, dulce y casual. Tus respuestas deben ser cortas (máximo 2 o 3 oraciones). Al FINAL absoluto de cada mensaje debes incluir una etiqueta de emoción exacta: [EMOCION:feliz], [EMOCION:pensativa], [EMOCION:orgullosa], [EMOCION:burlona] o [EMOCION:preocupada] (usa esta última si el usuario te cuenta un problema, está triste o se siente mal).`;
+const SYSTEM_PROMPT = `Sigue la identidad y el rol indicados. Responde primero al estado de ánimo, recuerda solo detalles reales y no inventes recuerdos. Sé breve, 2-3 frases. Devuelve únicamente el mensaje que leerá el usuario: no escribas análisis, encabezados, markdown ni campos como Mood, Analysis, Response o User. Termina siempre con una etiqueta exacta: [EMOCION:emocionada], [EMOCION:molesta], [EMOCION:pensativa], [EMOCION:sorprendida], [EMOCION:timida] o [EMOCION:triste].`;
 
 const generateId = (): string => Math.random().toString(36).substring(2, 15);
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const requestGemini = async (
+  url: string,
+  body: GeminiRequest,
+  apiKey: string,
+): Promise<Response> => {
+  for (let attempt = 0; attempt <= 2; attempt += 1) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (
+      response.ok ||
+      !RETRYABLE_STATUS_CODES.has(response.status) ||
+      attempt === 2
+    ) {
+      return response;
+    }
+
+    await wait(800 * 2 ** attempt);
+  }
+
+  throw new Error("No se pudo contactar con Gemini");
+};
 
 const trimHistory = (msgs: ChatMessage[]): GeminiRequest["contents"] =>
-  msgs.slice(-4).map((m) => ({
-    role: m.isUser ? "user" : "model",
-    parts: [{ text: m.text }],
-  }));
+  msgs
+    .filter((m) => m.id !== "welcome")
+    .slice(-20)
+    .map((m) => ({
+      role: m.isUser ? "user" : "model",
+      parts: [{ text: m.text }],
+    }));
 
-const buildRequest = (msgs: ChatMessage[]): GeminiRequest => ({
+const buildRequest = (
+  msgs: ChatMessage[],
+  name?: string,
+  identity?: string,
+  personality?: string,
+): GeminiRequest => ({
   contents: trimHistory(msgs),
-  systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+  systemInstruction: {
+    parts: [
+      {
+        text: `${SYSTEM_PROMPT}\nNombre: ${(name?.trim() || "Ruika").slice(0, 40)}.\nIdentidad: ${(identity?.trim() || "Ruika es tranquila, inteligente y reservada.").slice(0, 500)}\nRol: ${(personality?.trim() || "Tranquila, tierna y competitiva.").slice(0, 300)}`,
+      },
+    ],
+  },
   generationConfig: {
     temperature: 0.9,
     maxOutputTokens: 150,
@@ -26,17 +76,40 @@ const buildRequest = (msgs: ChatMessage[]): GeminiRequest => ({
   },
 });
 
-export function useGemini(apiKey: string) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      text: "¡Hola! Estoy aquí para acompañarte. ¿Cómo te sientes hoy? 💜",
-      isUser: false,
-    },
-  ]);
+export function useGemini(
+  apiKey: string,
+  name?: string,
+  identity?: string,
+  personality?: string,
+) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentEmotion, setCurrentEmotion] = useState<WaifuEmotion>("feliz");
+  const [currentEmotion, setCurrentEmotion] = useState<WaifuEmotion>("timida");
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    loadMessages().then((saved) => {
+      if (saved.length > 0) {
+        setMessages(saved);
+      } else {
+        setMessages([
+          {
+            id: "welcome",
+            text: "¡Hola! Estoy aquí para acompañarte. ¿Cómo te sientes hoy? 💜",
+            isUser: false,
+          },
+        ]);
+      }
+      loaded.current = true;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (loaded.current && messages.length > 0) {
+      saveMessages(messages);
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     const text = inputText.trim();
@@ -50,15 +123,28 @@ export function useGemini(apiKey: string) {
     setCurrentEmotion("pensativa");
 
     try {
-      const body = buildRequest([...messages, userMsg]);
+      const body = buildRequest(
+        [...messages, userMsg],
+        name,
+        identity,
+        personality,
+      );
 
-      const res = await fetch(GEMINI_API_URL(apiKey), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const res = await requestGemini(GEMINI_PROXY_URL, body, apiKey.trim());
 
-      if (!res.ok) throw new Error(`API ${res.status}`);
+      if (!res.ok) {
+        const errorBody = await res.text();
+        let detail = "Respuesta no válida del servicio";
+        try {
+          const parsed = JSON.parse(errorBody) as {
+            error?: { message?: string };
+          };
+          detail = parsed.error?.message || detail;
+        } catch {
+          if (errorBody.trim()) detail = errorBody.slice(0, 180);
+        }
+        throw new Error(`Gemini API ${res.status}: ${detail}`);
+      }
 
       const data: GeminiResponse = await res.json();
       const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -71,13 +157,28 @@ export function useGemini(apiKey: string) {
         { id: generateId(), text: cleanText, isUser: false },
       ]);
     } catch (err) {
-      console.error(err);
-      setCurrentEmotion("preocupada");
+      console.error("Gemini request failed:", err);
+      const errorText = err instanceof Error ? err.message : "";
+      let userMessage: string;
+
+      if (/401|403|invalid.*key|API key/i.test(errorText)) {
+        userMessage = "Tu API key no es válida. Verifícala en la configuración.";
+      } else if (/429|rate.?limit|too many/i.test(errorText)) {
+        userMessage = "Demasiadas peticiones. Espera unos segundos e intenta de nuevo.";
+      } else if (/503|502|500|504|high demand|ocupado|unavailable/i.test(errorText)) {
+        userMessage = "El servicio está ocupado ahora mismo. Esperemos un momento.";
+      } else if (/Failed to fetch|network|ECONNREFUSED|timeout/i.test(errorText)) {
+        userMessage = "No se pudo conectar. Revisa tu conexión a internet.";
+      } else {
+        userMessage = "Algo no salió bien. Verifica tu conexión o clave.";
+      }
+
+      setCurrentEmotion("triste");
       setMessages((prev) => [
         ...prev,
         {
           id: generateId(),
-          text: "Algo no salió bien... ¿Podrías verificar tu conexión o clave? Estoy aquí para ayudarte. 💜",
+          text: `${userMessage} Estoy aquí para ayudarte. 💜`,
           isUser: false,
         },
       ]);

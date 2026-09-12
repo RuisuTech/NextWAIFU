@@ -1,100 +1,286 @@
-import React from "react";
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ThemeColors } from "../../companion/types";
-import { ACCENT_COLORS } from "../../shared/theme";
+import React, { useState } from "react";
+import {
+    Modal,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
+} from "react-native";
+import { ChatMessage, ThemeColors } from "../../companion/types";
+import { ACCENT_COLOR } from "../../shared/theme";
 
 interface Props {
-  visible: boolean;
-  onClose: () => void;
   onGoSetup: () => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  accentColor: string;
-  onSelectAccent: (c: string) => void;
+  voiceEnabled: boolean;
+  onToggleVoice: () => void;
+  elevenLabsApiKey?: string;
+  elevenLabsVoiceId?: string;
+  onSaveVoice: (apiKey: string, voiceId: string) => Promise<void>;
   theme: ThemeColors;
+  messages: ChatMessage[];
 }
 
 export function GearMenu({
-  visible,
-  onClose,
   onGoSetup,
   isDarkMode,
   onToggleTheme,
-  accentColor,
-  onSelectAccent,
+  voiceEnabled,
+  onToggleVoice,
+  elevenLabsApiKey,
+  elevenLabsVoiceId,
+  onSaveVoice,
   theme,
+  messages,
 }: Props) {
+  const [showLogs, setShowLogs] = useState(false);
+  const [showVoice, setShowVoice] = useState(false);
+  const [voiceApiKey, setVoiceApiKey] = useState(elevenLabsApiKey || "");
+  const [voiceId, setVoiceId] = useState(elevenLabsVoiceId || "");
+
+  const openVoice = () => {
+    setVoiceApiKey(elevenLabsApiKey || "");
+    setVoiceId(elevenLabsVoiceId || "");
+    setShowVoice(true);
+  };
+
+  const saveVoice = async () => {
+    await onSaveVoice(voiceApiKey.trim(), voiceId.trim());
+    setShowVoice(false);
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={[s.overlay, { backgroundColor: theme.overlay }]}>
-        <View style={[s.menu, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}>
-          <Text style={[s.title, { color: theme.text }]}>Opciones</Text>
+    <>
+      <View
+        style={[
+          s.toolbar,
+          { backgroundColor: theme.overlay, borderColor: theme.border },
+        ]}
+      >
+        <TouchableOpacity
+          accessibilityLabel="Volver al menú principal"
+          style={s.tool}
+          onPress={onGoSetup}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.toolIcon, { color: ACCENT_COLOR }]}>⌂</Text>
+          <Text style={[s.toolText, { color: theme.text }]}>MENU</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[s.option, { borderBottomColor: theme.border }]}
-            onPress={() => { onClose(); onGoSetup(); }}
-          >
-            <Text style={[s.optionText, { color: theme.text }]}>⚙️  Ajustar NextWAIFU</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityLabel="Abrir historial de conversación"
+          style={[s.tool, { borderLeftColor: theme.border }]}
+          onPress={() => setShowLogs(true)}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.toolIcon, { color: ACCENT_COLOR }]}>▤</Text>
+          <Text style={[s.toolText, { color: theme.text }]}>LOGS</Text>
+        </TouchableOpacity>
 
-          <View style={[s.option, s.optionRow, { borderBottomColor: theme.border }]}>
-            <Text style={[s.optionText, { color: theme.text }]}>
-              {isDarkMode ? "🌙" : "☀️"}  Modo {isDarkMode ? "Oscuro" : "Claro"}
-            </Text>
-            <View style={s.switchContainer}>
-              <TouchableOpacity
-                style={[s.themeBtn, { backgroundColor: isDarkMode ? accentColor : theme.border }]}
-                onPress={onToggleTheme}
-              >
-                <Text style={[s.themeBtnTxt, { color: isDarkMode ? "#FFFFFF" : theme.text }]}>
-                  {isDarkMode ? "Dark" : "Light"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+        <TouchableOpacity
+          accessibilityLabel={`Cambiar a modo ${isDarkMode ? "día" : "noche"}`}
+          style={[s.tool, { borderLeftColor: theme.border }]}
+          onPress={onToggleTheme}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.toolIcon, { color: ACCENT_COLOR }]}>
+            {isDarkMode ? "☾" : "☼"}
+          </Text>
+          <Text style={[s.toolText, { color: theme.text }]}>
+            {isDarkMode ? "NOCHE" : "DÍA"}
+          </Text>
+        </TouchableOpacity>
 
-          <View style={[s.option, { borderBottomColor: theme.border }]}>
-            <Text style={[s.optionText, { color: theme.text, marginBottom: 10 }]}>🎨  Color de Acento</Text>
-            <View style={s.colorRow}>
-              {ACCENT_COLORS.map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  style={[s.colorDot, { backgroundColor: c }, accentColor === c && s.colorDotActive]}
-                  onPress={() => onSelectAccent(c)}
-                />
-              ))}
-            </View>
-          </View>
-
-          <TouchableOpacity style={[s.close, { backgroundColor: theme.border }]} onPress={onClose}>
-            <Text style={[s.closeTxt, { color: theme.textMuted }]}>Cerrar</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          accessibilityLabel="Configurar voz de ElevenLabs"
+          style={[s.tool, { borderLeftColor: theme.border }]}
+          onPress={openVoice}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.toolIcon, { color: ACCENT_COLOR }]}>
+            {voiceEnabled ? "◖" : "⊘"}
+          </Text>
+          <Text style={[s.toolText, { color: theme.text }]}>VOZ</Text>
+        </TouchableOpacity>
       </View>
-    </Modal>
+
+      <TouchableOpacity
+        accessibilityLabel={voiceEnabled ? "Silenciar voz" : "Activar voz"}
+        style={s.voiceToggle}
+        onPress={onToggleVoice}
+        activeOpacity={0.75}
+      >
+        <Text style={[s.voiceToggleText, { color: ACCENT_COLOR }]}>
+          {voiceEnabled ? "VOZ ACTIVA" : "VOZ SILENCIADA"}
+        </Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={showLogs}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogs(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowLogs(false)}>
+          <View style={[s.modalOverlay, { backgroundColor: theme.overlay }]}>
+            <TouchableWithoutFeedback>
+              <View
+                style={[
+                  s.modalCard,
+                  {
+                    backgroundColor: theme.surfaceAlt,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <Text style={[s.modalTitle, { color: ACCENT_COLOR }]}>
+                  LOGS
+                </Text>
+                <ScrollView
+                  style={s.logs}
+                  contentContainerStyle={s.logsContent}
+                >
+                  {messages.length === 0 ? (
+                    <Text style={[s.emptyLogs, { color: theme.textMuted }]}>
+                      Aún no hay mensajes.
+                    </Text>
+                  ) : (
+                    messages.slice(-20).map((message) => (
+                      <View
+                        key={message.id}
+                        style={[
+                          s.logLine,
+                          {
+                            borderLeftColor: message.isUser
+                              ? ACCENT_COLOR
+                              : theme.border,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            s.logSpeaker,
+                            {
+                              color: message.isUser
+                                ? ACCENT_COLOR
+                                : theme.textMuted,
+                            },
+                          ]}
+                        >
+                          {message.isUser ? "TÚ" : "NEXTWAIFU"}
+                        </Text>
+                        <Text
+                          style={[s.logText, { color: theme.textSecondary }]}
+                        >
+                          {message.text}
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </ScrollView>
+                <TouchableOpacity
+                  style={[s.modalClose, { borderColor: theme.border }]}
+                  onPress={() => setShowLogs(false)}
+                >
+                  <Text style={[s.modalCloseText, { color: theme.textMuted }]}>
+                    CERRAR
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      <Modal visible={showVoice} transparent animationType="fade" onRequestClose={() => setShowVoice(false)}>
+        <TouchableWithoutFeedback onPress={() => setShowVoice(false)}>
+          <View style={[s.modalOverlay, { backgroundColor: theme.overlay }]}>
+            <TouchableWithoutFeedback>
+              <View style={[s.voiceCard, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}>
+                <Text style={[s.modalTitle, { color: ACCENT_COLOR }]}>VOZ</Text>
+                <Text style={[s.voiceHint, { color: theme.textMuted }]}>Cambia la API Key o el Voice ID de ElevenLabs sin salir del chat.</Text>
+                <TextInput style={[s.voiceInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]} value={voiceApiKey} onChangeText={setVoiceApiKey} placeholder="API Key (sk_...)" placeholderTextColor={theme.textMuted} secureTextEntry autoCapitalize="none" autoCorrect={false} />
+                <TextInput style={[s.voiceInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]} value={voiceId} onChangeText={setVoiceId} placeholder="Voice ID" placeholderTextColor={theme.textMuted} autoCapitalize="none" autoCorrect={false} />
+                <View style={s.voiceActions}>
+                  <TouchableOpacity style={[s.modalClose, { borderColor: theme.border }]} onPress={() => setShowVoice(false)}><Text style={[s.modalCloseText, { color: theme.textMuted }]}>CANCELAR</Text></TouchableOpacity>
+                  <TouchableOpacity style={[s.modalClose, { backgroundColor: ACCENT_COLOR, borderColor: ACCENT_COLOR }]} onPress={saveVoice}><Text style={s.saveVoiceText}>GUARDAR</Text></TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </>
   );
 }
 
 const s = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end" },
-  menu: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+  toolbar: {
+    flexDirection: "row",
     borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 36,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginBottom: 8,
+    minHeight: 52,
   },
-  title: { fontSize: 18, fontWeight: "bold", textAlign: "center", marginBottom: 16 },
-  option: { paddingVertical: 16, borderBottomWidth: 1 },
-  optionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  optionText: { fontSize: 16, fontWeight: "500" },
-  switchContainer: { flexDirection: "row", alignItems: "center" },
-  themeBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
-  themeBtnTxt: { fontSize: 13, fontWeight: "600" },
-  colorRow: { flexDirection: "row", gap: 14, justifyContent: "center" },
-  colorDot: { width: 36, height: 36, borderRadius: 18, borderWidth: 3, borderColor: "transparent" },
-  colorDotActive: { borderColor: "#FFFFFF", transform: [{ scale: 1.15 }] },
-  close: { marginTop: 16, paddingVertical: 14, borderRadius: 12, alignItems: "center" },
-  closeTxt: { fontSize: 15, fontWeight: "600" },
+  tool: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 7,
+    paddingHorizontal: 4,
+  },
+  toolIcon: { fontSize: 16, lineHeight: 18, marginBottom: 2 },
+  toolText: { fontSize: 9, fontWeight: "800", letterSpacing: 0.8 },
+  voiceToggle: { alignSelf: "flex-end", marginTop: -2, marginBottom: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  voiceToggleText: { fontSize: 8, fontWeight: "800", letterSpacing: 0.8 },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 560,
+    maxHeight: "75%",
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: 2,
+    textAlign: "center",
+    marginBottom: 14,
+  },
+  logs: { maxHeight: 390 },
+  logsContent: { paddingBottom: 4 },
+  logLine: { borderLeftWidth: 2, paddingLeft: 12, paddingVertical: 9 },
+  logSpeaker: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  logText: { fontSize: 14, lineHeight: 20 },
+  emptyLogs: { textAlign: "center", paddingVertical: 28, fontSize: 14 },
+  modalClose: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  modalCloseText: { fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
+  voiceCard: { width: "100%", maxWidth: 460, borderWidth: 1, borderRadius: 18, padding: 20 },
+  voiceHint: { fontSize: 12, lineHeight: 18, marginBottom: 14 },
+  voiceInput: { minHeight: 46, borderWidth: 1, borderRadius: 11, paddingHorizontal: 13, marginBottom: 9, fontSize: 13 },
+  voiceActions: { flexDirection: "row", gap: 8, marginTop: 5 },
+  saveVoiceText: { color: "#FFFFFF", fontSize: 11, fontWeight: "800", letterSpacing: 1.5 },
 });
