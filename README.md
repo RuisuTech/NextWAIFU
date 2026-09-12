@@ -13,6 +13,8 @@ Compañera virtual con IA que responde con empatía y cambia de expresión segú
 - La configuración se conserva al volver al menú (campos precargados)
 - El nombre de la waifu se muestra en el encabezado del chat
 - API key protegida mediante proxy (Edge Function en Vercel)
+- HTML lang configurado en español
+- Rutas inválidas redirigen al inicio (no hay página 404)
 - Desplegable en web (Vercel) y Android (EAS Build)
 
 ### Toolbar del chat
@@ -86,6 +88,7 @@ api/
   gemini.ts            # Edge Function: proxy a Gemini API
 app/
   _layout.tsx          # Root layout
+  +not-found.tsx       # Redirect a inicio en rutas inválidas
   (tabs)/
     index.tsx          # Pantalla principal
 src/
