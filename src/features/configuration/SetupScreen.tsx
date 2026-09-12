@@ -47,6 +47,7 @@ function resolveAvatar(uri: string) {
 }
 
 interface Props {
+  config?: AppConfig | null;
   onSave: (cfg: AppConfig) => void;
   theme: ThemeColors;
   accent: string;
@@ -55,6 +56,7 @@ interface Props {
 }
 
 export function SetupScreen({
+  config,
   onSave,
   theme,
   accent,
@@ -63,18 +65,20 @@ export function SetupScreen({
 }: Props) {
   const { width } = useWindowDimensions();
   const [view, setView] = useState<SetupView>("menu");
-  const [apiKey, setApiKey] = useState("");
-  const [elevenLabsApiKey, setElevenLabsApiKey] = useState("");
-  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState("");
+  const [apiKey, setApiKey] = useState(config?.apiKey || "");
+  const [elevenLabsApiKey, setElevenLabsApiKey] = useState(config?.elevenLabsApiKey || "");
+  const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState(config?.elevenLabsVoiceId || "");
   const [showKey, setShowKey] = useState(false);
-  const [characterName, setCharacterName] = useState("Ruika");
+  const [characterName, setCharacterName] = useState(config?.name || "Ruika");
   const [identity, setIdentity] = useState(
+    config?.identity ||
     "Ruika es una chica tranquila, inteligente y reservada, difícil de leer al principio. Con confianza se vuelve más tierna, juguetona y cercana. Tiene carácter, es muy competitiva y disfruta de las bromas y la complicidad. Demuestra su cariño de forma sutil y natural, sin exagerar. Es una compañera que escucha, acompaña y motiva, pero siempre mantiene su propia personalidad.",
   );
   const [personality, setPersonality] = useState(
+    config?.personality ||
     "Tranquila, reservada, inteligente, tierna, juguetona y competitiva.",
   );
-  const [avatars, setAvatars] = useState(DEFAULT_AVATARS_CONFIG);
+  const [avatars, setAvatars] = useState(config?.avatars || DEFAULT_AVATARS_CONFIG);
   const [editingEmotion, setEditingEmotion] = useState<WaifuEmotion | null>(
     null,
   );
@@ -643,7 +647,7 @@ export function SetupScreen({
             </TouchableOpacity>
           )}
           <Text style={[s.footer, { color: theme.textMuted }]}>
-            NEXTWAIFU // CAPÍTULO 01
+            NEXTWAIFU // v1.0
           </Text>
         </ScrollView>
       </SafeAreaView>

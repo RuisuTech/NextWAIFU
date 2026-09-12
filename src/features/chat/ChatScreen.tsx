@@ -228,7 +228,7 @@ export function ChatScreen({
           ]}
         >
           <View style={[s.nameHeader, { borderBottomColor: theme.border }]}>
-            <Text style={[s.nameLabel, { color: accent }]}>NextWAIFU</Text>
+            <Text style={[s.nameLabel, { color: accent }]}>{config.name || "NextWAIFU"}</Text>
             <View style={[s.headerRule, { backgroundColor: accent }]} />
           </View>
 
@@ -265,7 +265,7 @@ export function ChatScreen({
               ]}
             >
               <TextInput
-                accessibilityLabel="Mensaje para NextWAIFU"
+                accessibilityLabel={`Mensaje para ${config.name || "NextWAIFU"}`}
                 style={[
                   s.input,
                   { color: theme.text },

@@ -17,6 +17,7 @@ export default function NextWaifuScreen() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [showSetup, setShowSetup] = useState(false);
   const theme = resolveTheme(isDarkMode);
 
   useEffect(() => {
@@ -27,11 +28,14 @@ export default function NextWaifuScreen() {
     });
   }, []);
 
-  const handleSave = (cfg: AppConfig) => setConfig(cfg);
+  const handleSave = (cfg: AppConfig) => {
+    setConfig(cfg);
+    setShowSetup(false);
+  };
 
   const handleLogout = async () => {
     await removeMessages();
-    setConfig(null);
+    setShowSetup(true);
   };
 
   const handleToggleTheme = async () => {
@@ -68,9 +72,10 @@ export default function NextWaifuScreen() {
     );
   }
 
-  if (!config) {
+  if (!config || showSetup) {
     return (
       <SetupScreen
+        config={config}
         onSave={handleSave}
         theme={theme}
         accent={ACCENT_COLOR}

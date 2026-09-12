@@ -10,7 +10,8 @@ Compañera virtual con IA que responde con empatía y cambia de expresión segú
 - Opcionalmente integra ElevenLabs para voz natural (con fallback a voz del sistema)
 - Configuración personalizable: nombre, identidad y personalidad de la waifu
 - Accesos rápidos desde el chat: cambiar API key, tema y voz
-- La configuración se conserva al volver al menú, solo se reinicia el chat
+- La configuración se conserva al volver al menú (campos precargados)
+- El nombre de la waifu se muestra en el encabezado del chat
 - API key protegida mediante proxy (Edge Function en Vercel)
 - Desplegable en web (Vercel) y Android (EAS Build)
 
