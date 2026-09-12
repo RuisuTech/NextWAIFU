@@ -7,7 +7,7 @@ import { SetupScreen } from "../../src/features/configuration/SetupScreen";
 import {
     loadConfig,
     loadTheme,
-    removeConfig,
+    removeMessages,
     saveConfig,
     saveTheme,
 } from "../../src/shared/storage";
@@ -30,7 +30,7 @@ export default function NextWaifuScreen() {
   const handleSave = (cfg: AppConfig) => setConfig(cfg);
 
   const handleLogout = async () => {
-    await removeConfig();
+    await removeMessages();
     setConfig(null);
   };
 
@@ -47,6 +47,13 @@ export default function NextWaifuScreen() {
       elevenLabsApiKey: apiKey,
       elevenLabsVoiceId: voiceId,
     };
+    await saveConfig(updatedConfig);
+    setConfig(updatedConfig);
+  };
+
+  const handleSaveGeminiKey = async (apiKey: string) => {
+    if (!config) return;
+    const updatedConfig = { ...config, apiKey };
     await saveConfig(updatedConfig);
     setConfig(updatedConfig);
   };
@@ -81,6 +88,7 @@ export default function NextWaifuScreen() {
       accent={ACCENT_COLOR}
       isDarkMode={isDarkMode}
       onToggleTheme={handleToggleTheme}
+      onSaveGeminiKey={handleSaveGeminiKey}
       onSaveVoice={handleSaveVoice}
     />
   );

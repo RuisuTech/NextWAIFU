@@ -18,8 +18,10 @@ interface Props {
   onToggleTheme: () => void;
   voiceEnabled: boolean;
   onToggleVoice: () => void;
+  geminiApiKey: string;
   elevenLabsApiKey?: string;
   elevenLabsVoiceId?: string;
+  onSaveGeminiKey: (apiKey: string) => Promise<void>;
   onSaveVoice: (apiKey: string, voiceId: string) => Promise<void>;
   theme: ThemeColors;
   messages: ChatMessage[];
@@ -31,14 +33,18 @@ export function GearMenu({
   onToggleTheme,
   voiceEnabled,
   onToggleVoice,
+  geminiApiKey,
   elevenLabsApiKey,
   elevenLabsVoiceId,
+  onSaveGeminiKey,
   onSaveVoice,
   theme,
   messages,
 }: Props) {
   const [showLogs, setShowLogs] = useState(false);
   const [showVoice, setShowVoice] = useState(false);
+  const [showGemini, setShowGemini] = useState(false);
+  const [geminiKey, setGeminiKey] = useState(geminiApiKey);
   const [voiceApiKey, setVoiceApiKey] = useState(elevenLabsApiKey || "");
   const [voiceId, setVoiceId] = useState(elevenLabsVoiceId || "");
 
@@ -46,6 +52,16 @@ export function GearMenu({
     setVoiceApiKey(elevenLabsApiKey || "");
     setVoiceId(elevenLabsVoiceId || "");
     setShowVoice(true);
+  };
+
+  const openGemini = () => {
+    setGeminiKey(geminiApiKey);
+    setShowGemini(true);
+  };
+
+  const saveGemini = async () => {
+    await onSaveGeminiKey(geminiKey.trim());
+    setShowGemini(false);
   };
 
   const saveVoice = async () => {
@@ -93,6 +109,16 @@ export function GearMenu({
           <Text style={[s.toolText, { color: theme.text }]}>
             {isDarkMode ? "NOCHE" : "DÍA"}
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          accessibilityLabel="Configurar API Key de IA"
+          style={[s.tool, { borderLeftColor: theme.border }]}
+          onPress={openGemini}
+          activeOpacity={0.75}
+        >
+          <Text style={[s.toolIcon, { color: ACCENT_COLOR }]}>✦</Text>
+          <Text style={[s.toolText, { color: theme.text }]}>IA</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -208,6 +234,24 @@ export function GearMenu({
                 <View style={s.voiceActions}>
                   <TouchableOpacity style={[s.modalClose, { borderColor: theme.border }]} onPress={() => setShowVoice(false)}><Text style={[s.modalCloseText, { color: theme.textMuted }]}>CANCELAR</Text></TouchableOpacity>
                   <TouchableOpacity style={[s.modalClose, { backgroundColor: ACCENT_COLOR, borderColor: ACCENT_COLOR }]} onPress={saveVoice}><Text style={s.saveVoiceText}>GUARDAR</Text></TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      <Modal visible={showGemini} transparent animationType="fade" onRequestClose={() => setShowGemini(false)}>
+        <TouchableWithoutFeedback onPress={() => setShowGemini(false)}>
+          <View style={[s.modalOverlay, { backgroundColor: theme.overlay }]}>
+            <TouchableWithoutFeedback>
+              <View style={[s.voiceCard, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}>
+                <Text style={[s.modalTitle, { color: ACCENT_COLOR }]}>IA</Text>
+                <Text style={[s.voiceHint, { color: theme.textMuted }]}>Cambia tu API Key de Google Gemini sin salir del chat.</Text>
+                <TextInput style={[s.voiceInput, { backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }]} value={geminiKey} onChangeText={setGeminiKey} placeholder="AIzaSy..." placeholderTextColor={theme.textMuted} secureTextEntry autoCapitalize="none" autoCorrect={false} />
+                <View style={s.voiceActions}>
+                  <TouchableOpacity style={[s.modalClose, { borderColor: theme.border }]} onPress={() => setShowGemini(false)}><Text style={[s.modalCloseText, { color: theme.textMuted }]}>CANCELAR</Text></TouchableOpacity>
+                  <TouchableOpacity style={[s.modalClose, { backgroundColor: ACCENT_COLOR, borderColor: ACCENT_COLOR }]} onPress={saveGemini}><Text style={s.saveVoiceText}>GUARDAR</Text></TouchableOpacity>
                 </View>
               </View>
             </TouchableWithoutFeedback>

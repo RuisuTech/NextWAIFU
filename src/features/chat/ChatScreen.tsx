@@ -39,6 +39,7 @@ interface Props {
   accent: string;
   isDarkMode: boolean;
   onToggleTheme: () => void;
+  onSaveGeminiKey: (apiKey: string) => Promise<void>;
   onSaveVoice: (apiKey: string, voiceId: string) => Promise<void>;
 }
 
@@ -49,6 +50,7 @@ export function ChatScreen({
   accent,
   isDarkMode,
   onToggleTheme,
+  onSaveGeminiKey,
   onSaveVoice,
 }: Props) {
   const {
@@ -198,8 +200,10 @@ export function ChatScreen({
           onToggleTheme={onToggleTheme}
           voiceEnabled={voiceEnabled}
           onToggleVoice={() => setVoiceEnabled((enabled) => !enabled)}
+          geminiApiKey={config.apiKey}
           elevenLabsApiKey={config.elevenLabsApiKey}
           elevenLabsVoiceId={config.elevenLabsVoiceId}
+          onSaveGeminiKey={onSaveGeminiKey}
           onSaveVoice={onSaveVoice}
           theme={theme}
           messages={messages}

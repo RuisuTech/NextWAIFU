@@ -6,11 +6,23 @@ Compañera virtual con IA que responde con empatía y cambia de expresión segú
 
 - Chat con Google Gemini 3.5 Flash Lite
 - Avatar que cambia según la emoción detectada (6 emociones)
-- Modo oscuro / claro
+- Modo oscuro / claro (por defecto oscuro)
 - Opcionalmente integra ElevenLabs para voz natural (con fallback a voz del sistema)
 - Configuración personalizable: nombre, identidad y personalidad de la waifu
-- Historial de conversación persistente
+- Accesos rápidos desde el chat: cambiar API key, tema y voz
+- La configuración se conserva al volver al menú, solo se reinicia el chat
+- API key protegida mediante proxy (Edge Function en Vercel)
 - Desplegable en web (Vercel) y Android (EAS Build)
+
+### Toolbar del chat
+
+| Botón | Función |
+|-------|---------|
+| MENU | Volver al setup |
+| LOGS | Ver historial de conversación |
+| NOCHE / DÍA | Cambiar tema |
+| IA | Cambiar API key de Gemini |
+| VOZ | Configurar ElevenLabs |
 
 ## Requisitos
 
@@ -39,6 +51,12 @@ npx vercel dev
 npx expo start --web
 ```
 
+Crear un archivo `.env` en la raíz:
+
+```
+EXPO_PUBLIC_GEMINI_PROXY_URL=http://localhost:3000/api/gemini
+```
+
 ## Despliegue
 
 ### Web (Vercel)
@@ -47,6 +65,8 @@ npx expo start --web
 npx expo export --platform web
 npx vercel --prod
 ```
+
+En producción la URL del proxy es `https://nextwaifu.vercel.app/api/gemini` (configurada por defecto en `src/config.ts`).
 
 ### Android
 
@@ -80,6 +100,7 @@ src/
   shared/
     storage.ts         # Persistencia con AsyncStorage
     theme.ts           # Paletas de colores
+    config.ts          # URL del proxy
 assets/
   images/              # Iconos y splash
   images/avatars/      # Avatares por emoción y fondos
